@@ -1,0 +1,9 @@
+{% extends "inc/base.html" %}
+{% load static %}
+{% block content %}
+    <h2 class="mt-5">Question</h2>
+    {% include 'inc/question_item.html' %}
+    {% for answer in answers %}
+        {% include 'inc/answer.html' %}
+    {% endfor %}
+{% endblock %}
