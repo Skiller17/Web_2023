@@ -41,8 +41,7 @@ def registration(request):
 
 
 def hot(request):
-    content = pagination(Question.objects.get_popular(), request)
-    content = sorted(content, key=lambda question: question.likes, reverse=True)
+    content = pagination(sorted(Question.objects.get_popular(), key=lambda question: question.likes, reverse=True), request)
     tags = Tag.objects.all().values()
     return render(request, "index.html", {"questions": content, "tags": tags})
 
