@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
-from .models import Question, Tag, User, Answer, Like
+from .models import Question, Tag, Profile, Answer, Like
 from django.db.models import Count
 from django.urls import reverse
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .forms import LoginForm
+from django.contrib.auth import authenticate, login, logout
+from django.http import HttpRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from .forms import LoginForm, SignUpForm, AskForm
+from django.contrib import auth
+from django.contrib.auth.models import User
 
 PAGINATION_SIZE = 10
 
@@ -14,16 +17,18 @@ def pagination(list_obj, request):
     paginator = Paginator(list_obj, PAGINATION_SIZE)
     page = request.GET.get('page')
     content = paginator.get_page(page)
-
     return content
 
 
 def index(request):
-    content = pagination(Question.objects.all().annotate(answers_count=Count("answer", distinct=True)))
-    tags = Tag.objects.all().values()
-    return render(request, "index.html", {"questions": content, "tags": tags})
+    content = pagination(Question.objects.all().annotate(answers_count=Count("answer", distinct=True)),
+                         request)
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "index.html", {"questions": content, "tags": tags, "top_users": top_users})
 
-def auth_view(request):
+
+def login_view(request):
     if request.method == 'GET':
         user_form = LoginForm()
     elif request.method == 'POST':
@@ -31,41 +36,86 @@ def auth_view(request):
         if user_form.is_valid():
             user = authenticate(request, **user_form.cleaned_data)
             if user:
+                auth.login(request, user)
+                return redirect(reverse('index'))
+            else:
+                user_form.add_error('password', "Not such Login/Password")
+                user_form.add_error('username', "")
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "login.html", {"form": user_form, "tags": tags, "top_users": top_users})
+
+
+def signup_view(request):
+    popular_tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    if request.method == 'GET':
+        user_form = SignUpForm()
+    elif request.method == 'POST':
+        user_form = SignUpForm(data=request.POST)
+        if user_form.is_valid():
+            user = User.objects.create_user(username=user_form.cleaned_data['username'],
+                                            email=user_form.cleaned_data['email'],
+                                            password=user_form.cleaned_data['password'],
+                                            )
+            user.save()
+            profile = Profile.objects.create(user=user)
+            profile.save()
+            if user:
                 login(request, user)
                 return redirect(reverse('index'))
             else:
                 return redirect(reverse('login'))
-
-    return render(request, "authefication.html", {"form": user_form})
-
-def ask(request):
-    tags = Tag.objects.all().values()
-    return render(request, "ask.html", {"tags": tags})
+    return render(request, "registration.html", {"form": user_form, "tags": popular_tags, "top_users": top_users})
 
 
-def authefication(request):
-    tags = Tag.objects.all().values()
-    return render(request, "authefication.html", {"tags": tags})
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+@login_required(login_url="login")
+def ask_view(request):
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    if request.method == 'GET':
+        form = AskForm()
+    elif request.method == 'POST':
+        form = AskForm(data=request.POST)
+        if form.is_valid():
+            qstn = Question.objects.create(title=form.cleaned_data['title'],
+                                           text=form.cleaned_data['text'],
+                                           author=Profile.objects.get(user=request.user))
+            qstn.save()
+            if qstn:
+                return redirect(reverse("question", args=[qstn.id]))
+            else:
+                return redirect(reverse('ask'))
+
+    return render(request, "ask.html",
+                  {"form": form, "tags": tags, "top_users": top_users, "key": "authorized"})
 
 
-def registration(request):
-    tags = Tag.objects.all().values()
-    return render(request, "registration.html", {"tags": tags})
+def reg(request):
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "registration.html", {"tags": tags, "top_users": top_users})
 
 
 def hot(request):
-    content = pagination(Question.objects.get_popular().annotate(answers_count=Count("answer", distinct=True)), request)
-    tags = Tag.objects.all().values()
-    return render(request, "index.html", {"questions": content, "tags": tags})
+    content = pagination(Question.objects.get_popular(), request)
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "index.html", {"questions": content, "tags": tags, "top_users": top_users})
 
 
 def question(request, i: int):
     quest = Question.objects.get_question_by_id(i).annotate(answers_count=Count("answer", distinct=True))[0]
     answers = pagination(Answer.objects.get_answers_by_question(i), request)
-    tags = Tag.objects.all().values()
-    tags_for_quest = quest.get_tags().values()
-    return render(request, "question.html", {'question': quest, "answers": answers, "tags": tags,
-                                                  "tags_for_quest": tags_for_quest})
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    tags_for_quest = quest.get_tags().values()[:3]
+    return render(request, "question.html", {'question': quest, "answers": answers, "top_users": top_users,
+                                                  "tags": tags, "tags_for_quest": tags_for_quest})
 
 
 def tags(request, i: int):
@@ -74,11 +124,15 @@ def tags(request, i: int):
 
 
 def questions_with_tags(request, tag_title):
-    content = pagination(Question.objects.get_questions_by_tag_title(tag_title).annotate(answers_count=Count("answer", distinct=True)), request)
-    tags = Tag.objects.all().values()
-    return render(request, "index.html", {"questions": content, "tags": tags})
+    content = pagination(
+        Question.objects.get_questions_by_tag_title(tag_title).annotate(answers_count=Count("answer", distinct=True)),
+        request)
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "index.html", {"questions": content, "tags": tags, "top_users": top_users})
 
 
-def settings(request):
-    tags = Tag.objects.all().values()
-    return render(request, "settings.html", {"tags": tags})
+def setting(request):
+    tags = Tag.objects.get_popular()
+    top_users = Profile.objects.get_top_users()
+    return render(request, "settings.html", {"tags": tags, "top_users": top_users})

@@ -5,30 +5,32 @@
     </div>
     <div class="col-10">
 
-        <h3><a href="{% url 'question' question.id %}">{{ question.title }}</a> Tags:
+        <h3 class = "tags"><a href="{% url 'question' question.id %}"
+                                            style="margin:10px;">{{ question.title }}</a> Tags:
             {% for tag in tags_for_quest %}
                 <a href="{% url 'question_tag' tag.title %}">{{ tag.title }}</a>
             {% endfor %}
         </h3>
         <p>{{ question.text }}</p>
+
     </div>
     <div class="col-md-6 d-flex justify-content-left" style="padding-top: 10px">
-        <div>
-            <button style="background-color: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(27, 31, 35, 0.15);">
-                Answers({{ question.answers_count }})
-            </button>
-        </div>
         <div>
             <button style="background-color: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(27, 31, 35, 0.15);">
                 I like it!
             </button>
         </div>
-        <div>
+        <div style = "padding-left:10px; padding-top:5px">
             {% if question.likes > 10 %}
                 <div style="color: #00ff00">Rating:{{ question.likes }}</div>
             {% else %}
                 <div style="color: #111111">Rating:{{ question.likes }}</div>
             {% endif %}
+        </div>
+            <div>
+            <div style = "padding-left:10px; padding-top:5px">
+                Answers({{ question.answers_count }})
+            </div>
         </div>
 
 
