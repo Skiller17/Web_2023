@@ -1,13 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from .models import Question, Tag, User, Answer, Like
+from django.db.models import Count
+from django.urls import reverse
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from .forms import LoginForm
 
-TAGS = [
-    {
-        "title": f"tag#{i}",
-        "number": i,
-    } for i in range(20)
-]
 PAGINATION_SIZE = 10
 
 
@@ -20,10 +19,24 @@ def pagination(list_obj, request):
 
 
 def index(request):
-    content = pagination(Question.objects.all().values(), request)
+    content = pagination(Question.objects.all().annotate(answers_count=Count("answer", distinct=True)))
     tags = Tag.objects.all().values()
     return render(request, "index.html", {"questions": content, "tags": tags})
 
+def auth_view(request):
+    if request.method == 'GET':
+        user_form = LoginForm()
+    elif request.method == 'POST':
+        user_form = LoginForm(data=request.POST)
+        if user_form.is_valid():
+            user = authenticate(request, **user_form.cleaned_data)
+            if user:
+                login(request, user)
+                return redirect(reverse('index'))
+            else:
+                return redirect(reverse('login'))
+
+    return render(request, "authefication.html", {"form": user_form})
 
 def ask(request):
     tags = Tag.objects.all().values()
@@ -41,13 +54,13 @@ def registration(request):
 
 
 def hot(request):
-    content = pagination(sorted(Question.objects.get_popular(), key=lambda question: question.likes, reverse=True), request)
+    content = pagination(Question.objects.get_popular().annotate(answers_count=Count("answer", distinct=True)), request)
     tags = Tag.objects.all().values()
     return render(request, "index.html", {"questions": content, "tags": tags})
 
 
 def question(request, i: int):
-    quest = Question.objects.get_question_by_id(i)[0]
+    quest = Question.objects.get_question_by_id(i).annotate(answers_count=Count("answer", distinct=True))[0]
     answers = pagination(Answer.objects.get_answers_by_question(i), request)
     tags = Tag.objects.all().values()
     tags_for_quest = quest.get_tags().values()
@@ -61,7 +74,7 @@ def tags(request, i: int):
 
 
 def questions_with_tags(request, tag_title):
-    content = pagination(Question.objects.get_questions_by_tag_title(tag_title), request)
+    content = pagination(Question.objects.get_questions_by_tag_title(tag_title).annotate(answers_count=Count("answer", distinct=True)), request)
     tags = Tag.objects.all().values()
     return render(request, "index.html", {"questions": content, "tags": tags})
 

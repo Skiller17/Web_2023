@@ -1,14 +1,14 @@
 {% load static %}
 <div class="row answer">
     <div class="col-2">
-        <img class="avatar-answer" src="{% static 'img/Capibers.jpg' %}" alt="">
+        <img class="avatar-answer" src="{% static 'images/gigachad.jpg' %}" alt="">
     </div>
     <div class="col-10">
         <strong>{{ answer.get_author }}</strong>
         <p>{{ answer.content }}</p>
     </div>
     {% if answer.is_correct %}
-    <div class="col-10" style="color: #00ff00">Correct answer</div>
+        <div class="col-10" style="color: #00ff00">Correct answer</div>
     {% endif %}
     <div class="col-md-6 d-flex justify-content-left" style="padding-top: 10px">
         <div>
@@ -22,12 +22,10 @@
             </button>
         </div>
         <div>
-            {% if answer.likes > 0 %}
-            <div style="color: #00ff00">Rating:{{ answer.likes }}</div>
-            {% elif answer.likes == 0 %}
-            <div style="color: #eeee00">Rating:{{ answer.likes }}</div>
+            {% if answer.likes > 10 %}
+                <div style="color: #00ff00">Rating:{{ answer.likes }}</div>
             {% else %}
-            <div style="color: #ff0000">Rating:{{ answer.likes }}</div>
+                <div style="color: #111111">Rating:{{ answer.likes }}</div>
             {% endif %}
         </div>
 

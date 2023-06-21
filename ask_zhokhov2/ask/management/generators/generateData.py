@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from itertools import chain
 
 from ask.models import (
     User,
@@ -17,9 +18,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # self.generate_users()
         # self.generate_tags()
-        # self.generate_questions()
-        self.generate_answers()
-        self.generate_likes()
+        self.generate_questions()
+        # self.generate_answers()
+        # self.generate_likes()
 
     def generate_users(self):
         users = []
@@ -41,26 +42,34 @@ class Command(BaseCommand):
 
     def generate_questions(self):
         questions = []
-        for i in range(self.GENERATION_ORDER * 10)
+        for i in range(self.GENERATION_ORDER * 10):
             author = random.choice(User.objects.all())
             q = Question()
             q.title = f'Question {i}'
-            q.text = f'How to do the {i} task?'
+            q.text = f'I dont know, help me:('
             q.author = author
-            q.save()
             q.tags.add(random.choice(Tag.objects.all()))
             questions.append(q)
         Question.objects.bulk_create(questions)
 
     def generate_answers(self):
-        author = random.choice(User.objects.all())
-        for i in range(GENERATION_ORDER * 100):
-            answer = Answer()
-            answer.text = f'answer {i}'
-            answer.author = author
-            answer.question = random.choice(Question.objects.all())
-            answer.save()
+        answers = []
+        for i in range(self.GENERATION_ORDER * 100):
+            author = random.choice(User.objects.all())
+            a = Answer()
+            a.content = f'answer {i}'
+            a.author = author
+            a.question = random.choice(Question.objects.all())
+            answers.append(a)
+        Answer.objects.bulk_create(answers)
 
     def generate_likes(self):
-        for i in range(GENERATION_ORDER * 200):
-            like = Like()
+        likes = []
+        for i in range(self.GENERATION_ORDER * 200):
+            author = random.choice(User.objects.all())
+            answer = random.choice(Answer.objects.all())
+            question = random.choice(Question.objects.all())
+            liked_object = random.choice([answer, question])
+            like = Like(like_object=liked_object, user=author)
+            likes.append(like)
+        Like.objects.bulk_create(likes)
