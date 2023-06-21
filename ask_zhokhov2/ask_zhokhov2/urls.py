@@ -20,13 +20,14 @@ from ask import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name = "index"),
-    path('ask/', views.ask_view, name = 'ask'),
+    path('', views.index, name="index"),
+    path('ask/', views.ask_view, name='ask'),
     path('tags/<int:i>', views.tags, name='tags'),
-    path('question/<int:i>', views.question, name = "question"),
-    path('login/', views.login_view, name = 'login'),
-    path('registration/', views.signup_view, name = 'reg'),
-    path('hot/', views.hot, name = 'hot'),
+    path('question/<int:i>', views.question, name="question"),
+    path('answer/<int:i>', views.answer, name="answer"),
+    path('login/', views.login_view, name='login'),
+    path('registration/', views.signup_view, name='reg'),
+    path('hot/', views.hot, name='hot'),
     path('tag/<str:tag_title>', views.questions_with_tags, name='question_tag'),
     path('setting/', views.setting, name='setting'),
     path('logout/', views.logout_view, name="logout_view")
