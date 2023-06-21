@@ -50,7 +50,7 @@
                 <div>
                     <ul class="navbar-nav me-auto mb-2 mb-md-0">
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url " logout_view" %}">Log out</a>
+                            <a class="nav-link" href="{% url 'logout_view' %}">Log out</a>
                         </li>
 
                         <li class="nav-item">
@@ -63,7 +63,7 @@
                 </div>
                 <div>
                     <a><img class="avatar-navbar" style="width:37px; height:37px"
-                            src="{% static 'img/Avatar.png' %}"
+                            src="{% static 'img/Avatar.jpg' %}"
                             alt=""></a>
                 </div>
                 {% else %}
@@ -108,9 +108,6 @@
                 <div class="mt-5, sidebar_column">
                     {% block top_users %}
                     <div class="mt-5, sidebar_column">
-                        {% for top_user in top_users %}
-                        {% include "inc/top_users.html" %}
-                        {% endfor %}
                     </div>
                     {% endblock %}
                 </div>

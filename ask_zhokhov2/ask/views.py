@@ -116,7 +116,7 @@ def question(request, i: int):
             temp_answer.save()
             if temp_answer:
                     return redirect(reverse("answer", args=[temp_answer.id]))
-    return render(request, "question_page.html",
+    return render(request, "question.html",
                   {'form': form, 'question': quest, "answers": answers, "top_users": top_users,
                    "tags": tags, "tags_for_quest": tags_for_quest})
 

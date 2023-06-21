@@ -9,7 +9,7 @@
             {% csrf_token %}
             {% bootstrap_form form %}
             <button class="btn btn-primary" type="submit">Sign Up!</button>
-            <a style="font-size: 12px; color:#575656; text-decoration: none; margin-left: 16px" href="{% url "index" %}">Return to questions</a>
+            <a style="font-size: 12px; color:#575656; text-decoration: none; margin-left: 16px" href="{% url 'index' %}">Return to questions</a>
         </form>
     </div>
 {% endblock %}
